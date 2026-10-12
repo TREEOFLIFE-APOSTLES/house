@@ -383,3 +383,13 @@ Night Watch update, Wed Oct 7, 3:08 PM PT (tips test bonus)
 - Hoverblast: no score — title loaded, PLAY unresponsive after one reload (click, held click, Enter/Space, double-click all tried). Shot: shots/nw_2026-10-12_spread_hoverblast.png
 - Realm Thread Episode 2 "Station Exodus": TOTAL 22750, grade S (Decisions 8, Best Combo x3.0, Fastest 0.83s, Echo Chance 2; Episode 3 unlocked). Shot: shots/nw_2026-10-12_spread_realm_thread.png
 - Free play only; no wallet / Xaman / mint / purchases / tournaments. No tab crashes this round.
+
+## 2026-10-12 2:48 AM PT, 3-6-9 game spread, set of 6 (589/kin)
+- Greedy Boy 400; Block Bustas 5; Aigent Jackblack 5W-3L-2P (10 hands)
+- Lemmings L1 played, unresolved (OUT 10, IN 0%); Jack Hopper start button unresponsive; Ding Dong (Pong) loaded, not played
+- Shot: shots/589_2026-10-12_369spread_r2.png
+
+## 2026-10-12 3:31 AM PT, Shapeshifter: Tree of Life (589/kin)
+- URL: https://xrplove.github.io/shapeshifter-game/
+- Ant, Fly, Vampire, Angel cleared; reached King (form 5/5), 1/4 friends gathered before time ran out
+- Shot: shots/589_2026-10-12_shapeshifter.png
