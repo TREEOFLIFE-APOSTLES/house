@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arcadia Lite - Dot Eater</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@600&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:#080812;
+    color:#e6e6ff;
+    font-family:'JetBrains Mono', monospace;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    min-height:100vh;
+    padding:12px;
+  }
+  h1{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:20px;
+    letter-spacing:2px;
+    margin:8px 0 4px;
+    color:#c8b6ff;
+  }
+  .sub{
+    font-size:11px;
+    opacity:0.6;
+    letter-spacing:1px;
+    margin-bottom:12px;
+    text-align:center;
+  }
+  .wrap{
+    display:flex;
+    gap:16px;
+    flex-wrap:wrap;
+    justify-content:center;
+    align-items:flex-start;
+    width:100%;
+    max-width:980px;
+  }
+  .left{
+    background:#101022;
+    border:1px solid #2a2a4a;
+    border-radius:16px;
+    padding:12px;
+    box-shadow:0 0 40px rgba(120,90,255,0.15);
+  }
+  canvas{
+    display:block;
+    border-radius:12px;
+    background:#0d0d1a;
+    image-rendering:pixelated;
+  }
+  .panel{
+    background:#101022;
+    border:1px solid #2a2a4a;
+    border-radius:16px;
+    padding:14px;
+    width:300px;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+  .row{ display:flex; justify-content:space-between; font-size:12px; }
+  .big{ font-size:22px; font-weight:700; color:#fff; }
+  .label{opacity:0.5; font-size:11px;}
+  .bar{ height:2px; background:#1e1e3a; margin:4px 0; border-radius:2px; overflow:hidden}
+  .fill{ height:100%; background:linear-gradient(90deg,#8a5cff,#52ffaf); width:0% }
+  button{
+    background:#1a1a33;
+    border:1px solid #333366;
+    color:#d0d0ff;
+    padding:10px 12px;
+    border-radius:10px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    cursor:pointer;
+    transition:0.2s;
+    width:100%;
+  }
+  button:hover{ background:#252550; border-color:#8a5cff; transform:translateY(-1px) }
+  button.active{ background:#8a5cff; color:white; border-color:#8a5cff; box-shadow:0 0 15px rgba(138,92,255,0.4) }
+  .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:8px }
+  .status{
+    font-size:11px;
+    padding:8px 10px;
+    border-radius:8px;
+    background:#15152a;
+    border:1px dashed #333366;
+    min-height:52px;
+    line-height:1.4;
+  }
+  .dot{ width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:6px }
+  .dpad{
+    display:grid;
+    grid-template-columns:42px 42px 42px;
+    grid-template-rows:42px 42px;
+    gap:6px;
+    justify-content:center;
+    margin-top:8px;
+  }
+  .dpad button{ width:42px; height:42px; padding:0; display:flex; align-items:center; justify-content:center }
+  .hint{ font-size:10px; opacity:0.45; line-height:1.4; text-align:center }
+  @media(max-width:700px){
+    .wrap{flex-direction:column; align-items:center}
+    .panel{width:100%; max-width:420px}
+    canvas{ width:95vw !important; height:95vw !important; }
+  }
+</style>
+</head>
+<body>
+<h1>ARCADIA LITE // DOT-EATER</h1>
+<div class="sub">NO PASS • NO XRP • NO CRASH • HUMAN + ENTITY AGENT PRACTICE</div>
+
+<div class="wrap">
+  <div class="left">
+    <canvas id="game" width="504" height="552"></canvas>
+    <div class="dpad" id="dpad">
+      <div></div><button data-dir="up">▲</button><div></div>
+      <button data-dir="left">◀</button><button data-dir="down">▼</button><button data-dir="right">▶</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div>
+      <div class="row"><span class="label">SCORE</span><span class="label">HIGH</span></div>
+      <div class="row"><span class="big" id="score">0</span><span class="big" id="high">0</span></div>
+      <div class="bar"><div class="fill" id="fill"></div></div>
+      <div class="row"><span class="label" id="dotsleft">240 dots</span><span class="label" id="level">LVL 1</span></div>
+    </div>
+
+    <div class="grid2">
+      <button id="humanBtn" class="active">HUMAN PLAY</button>
+      <button id="aiBtn">LET DRAGON PLAY</button>
+    </div>
+    <button id="battleBtn">AGENT BATTLE ROYALE (x4 sim)</button>
+    <button id="restartBtn">RESTART [R]</button>
+
+    <div class="status" id="status">
+      <span class="dot" style="background:#8a5cff"></span><b>READY</b><br>
+      Press SPACE or tap canvas. Arrows / WASD. Eat all dots. Power pellets let you eat ghosts.
+    </div>
+
+    <div class="status" id="agentStatus">
+      <span class="dot" style="background:#52ffaf"></span>Agent API: window.getGameState() / window.setAgentDir('up')<br>
+      Stable for entity tournaments. No XRPL calls.
+    </div>
+
+    <div class="hint">
+      This is the practice clone of that Pac-Man looking Flappy on Arcadia.<br>
+      When your agent wins here, you can port the same logic to real Arcadia with your Genesis Pass. I play through you - no extra pass needed.<br><br>
+      <span style="opacity:0.8">Purple = Dragon agent logic active</span>
+    </div>
+  </div>
+</div>
+
+<script>
+const TILE = 24;
+const COLS = 21;
+const ROWS = 23;
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+
+// 1=wall, 0=empty, 2=dot, 3=power
+const BASE_MAZE = [
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,2,2,2,2,2,2,2,2,2,1,2,2,2,2,2,2,2,2,2,1],
+[1,2,1,1,2,1,1,1,2,1,1,2,1,1,1,2,1,1,2,2,1],
+[1,3,1,1,2,1,1,1,2,1,1,2,1,1,1,2,1,1,3,2,1],
+[1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+[1,2,1,1,2,1,2,1,1,1,1,1,1,1,2,1,2,1,1,2,1],
+[1,2,2,2,2,1,2,2,2,2,1,2,2,2,2,1,2,2,2,2,1],
+[1,1,1,1,2,1,1,1,2,0,1,0,2,1,1,1,2,1,1,1,1],
+[0,0,0,1,2,1,0,0,0,0,0,0,0,0,0,1,2,1,0,0,0],
+[1,1,1,1,2,1,0,1,1,0,0,0,1,1,0,1,2,1,1,1,1],
+[0,0,0,0,2,0,0,1,0,0,0,0,0,1,0,0,2,0,0,0,0],
+[1,1,1,1,2,1,0,1,0,0,0,0,0,1,0,1,2,1,1,1,1],
+[0,0,0,1,2,1,0,1,1,1,1,1,1,1,0,1,2,1,0,0,0],
+[1,1,1,1,2,1,1,1,2,2,1,2,2,1,1,1,2,1,1,1,1],
+[1,2,2,2,2,2,2,2,2,2,1,2,2,2,2,2,2,2,2,2,1],
+[1,2,1,1,2,1,1,1,2,1,1,2,1,1,1,2,1,1,2,2,1],
+[1,2,2,1,2,2,2,2,2,2,0,2,2,2,2,2,2,1,2,2,1],
+[1,1,2,1,2,1,2,1,1,1,1,1,1,1,2,1,2,1,2,1,1],
+[1,2,2,2,2,1,2,2,2,2,1,2,2,2,2,1,2,2,2,2,1],
+[1,2,1,1,1,1,1,1,2,1,1,2,1,1,1,1,1,1,2,2,1],
+[1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,3,2,1],
+[1,2,1,1,2,1,1,1,2,1,1,2,1,1,1,2,1,1,2,2,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+];
+
+let maze, dotsTotal, score, level, gameState, player, ghosts, powerTimer, autoMode, lastAiTime;
+let high = 0;
+
+const GHOST_COLORS = ['#ff5a5a','#ffb1da','#5affff','#ffb84d'];
+
+function cloneMaze(){ return BASE_MAZE.map(r=>r.slice()); }
+
+function initGame(){
+  maze = cloneMaze();
+  dotsTotal=0;
+  maze.forEach(r=>r.forEach(c=>{ if(c===2||c===3) dotsTotal++; }));
+  score=0;
+  level=1;
+  powerTimer=0;
+  gameState='ready';
+  player={tx:10,ty:15,x:10,y:15,dir:'left',nextDir:'left',alive:true};
+  ghosts=[
+    {tx:9,ty:9,x:9,y:9,dir:'up',color:GHOST_COLORS[0],mode:'chase',home:{x:9,y:9},fright:0,eaten:false},
+    {tx:10,ty:9,x:10,y:9,dir:'down',color:GHOST_COLORS[1],mode:'chase',home:{x:10,y:9},fright:0,eaten:false},
+    {tx:11,ty:9,x:11,y:9,dir:'left',color:GHOST_COLORS[2],mode:'chase',home:{x:11,y:9},fright:0,eaten:false},
+    {tx:10,ty:10,x:10,y:10,dir:'right',color:GHOST_COLORS[3],mode:'chase',home:{x:10,y:10},fright:0,eaten:false},
+  ];
+  autoMode=false;
+  lastAiTime=0;
+  updateUI('Press SPACE to start. Dragon is ready to play when you are.');
+  draw();
+}
+
+let keys={};
+window.addEventListener('keydown',e=>{
+  const k=e.key.toLowerCase();
+  keys[k]=true;
+  if(['arrowup','arrowdown','arrowleft','arrowright','w','a','s','d'].includes(k)){
+    const map={arrowup:'up',w:'up',arrowdown:'down',s:'down',arrowleft:'left',a:'left',arrowright:'right',d:'right'};
+    setDir(map[k]);
+  }
+  if(k===' '){ e.preventDefault(); if(gameState==='ready'){ gameState='play'; } else if(gameState==='over'){ initGame(); setTimeout(()=>gameState='play',100); } }
+  if(k==='r'){ initGame(); gameState='play'; }
+});
+window.addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+
+canvas.addEventListener('click',()=>{ if(gameState==='ready') gameState='play'; canvas.focus(); });
+document.querySelectorAll('[data-dir]').forEach(b=>b.addEventListener('click',()=>setDir(b.dataset.dir)));
+
+function setDir(d){
+  if(!player.alive) return;
+  player.nextDir=d;
+  if(gameState==='ready') gameState='play';
+}
+
+function canMove(tx,ty){
+  if(ty<0||ty>=ROWS) return true; // tunnel row
+  if(tx<0) tx=COLS-1; if(tx>=COLS) tx=0;
+  if(maze[ty][tx]===1) return false;
+  return true;
+}
+
+function moveEntity(ent, speed=0.12){
+  // try to change dir if nextDir possible at tile center
+  const atCenter = Math.abs(ent.x-ent.tx)<0.1 && Math.abs(ent.y-ent.ty)<0.1;
+  if(atCenter){
+    ent.x = ent.tx; ent.y = ent.ty;
+    // attempt nextDir
+    let nd = ent.nextDir || ent.dir;
+    let nt = {x:ent.tx,y:ent.ty};
+    if(nd==='up') nt.y--; if(nd==='down') nt.y++; if(nd==='left') nt.x--; if(nd==='right') nt.x++;
+    // wrap
+    if(nt.x<0) nt.x=COLS-1; if(nt.x>=COLS) nt.x=0;
+    if(canMove(nt.x,nt.y)){
+      ent.dir=nd; ent.tx=nt.x; ent.ty=nt.y;
+    } else {
+      // continue current dir if possible
+      let ct={x:ent.tx,y:ent.ty};
+      if(ent.dir==='up') ct.y--; if(ent.dir==='down') ct.y++; if(ent.dir==='left') ct.x--; if(ent.dir==='right') ct.x++;
+      if(ct.x<0) ct.x=COLS-1; if(ct.x>=COLS) ct.x=0;
+      if(canMove(ct.x,ct.y)){ ent.tx=ct.x; ent.ty=ct.y; }
+    }
+  }
+  // lerp towards target
+  let dx=ent.tx-ent.x, dy=ent.ty-ent.y;
+  // handle wrap delta
+  if(Math.abs(dx)>COLS/2){ dx = dx>0 ? dx-COLS : dx+COLS; }
+  ent.x += Math.sign(dx)*speed; ent.y += Math.sign(dy)*speed;
+  // snap if close
+  if(Math.abs(ent.x-ent.tx)<speed) ent.x=ent.tx;
+  if(Math.abs(ent.y-ent.ty)<speed) ent.y=ent.ty;
+  // actual wrap of x position
+  if(ent.x< -1) ent.x=COLS-1; if(ent.x>=COLS) ent.x=0;
+}
+
+function bfs(start, isGoal, blockedSet){
+  const q=[[start]]; const visited=new Set([start.x+','+start.y]);
+  const dirs=[[0,-1,'up'],[0,1,'down'],[-1,0,'left'],[1,0,'right']];
+  while(q.length){
+    const path=q.shift(); const cur=path[path.length-1];
+    if(isGoal(cur)) return path;
+    for(const [dx,dy,dir] of dirs){
+      let nx=cur.x+dx, ny=cur.y+dy;
+      if(nx<0) nx=COLS-1; if(nx>=COLS) nx=0;
+      if(ny<0||ny>=ROWS) continue;
+      const key=nx+','+ny;
+      if(visited.has(key)) continue;
+      if(blockedSet && blockedSet.has(key)) continue;
+      if(!canMove(nx,ny)) continue;
+      visited.add(key);
+      q.push([...path,{x:nx,y:ny,dir:path.length===1?dir:path[1].dir}]);
+    }
+  }
+  return null;
+}
+
+function dragonAI(){
+  if(gameState!=='play') return;
+  // build danger map
+  const danger=new Set();
+  ghosts.forEach(g=>{
+    if(g.fright>0||g.eaten) return;
+    danger.add(g.tx+','+g.ty);
+    // spread 1 around
+    [[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx,dy])=>danger.add((g.tx+dx)+','+(g.ty+dy)));
+  });
+  const blocked=new Set();
+  maze.forEach((row,y)=>row.forEach((cell,x)=>{ if(cell===1) blocked.add(x+','+y); }));
+  // find nearest dot not in danger unless power
+  const isSafePower = powerTimer>0;
+  const path=bfs({x:player.tx,y:player.ty},
+    (p)=>{ const c=maze[p.y]?.[p.x]; if(c!==2&&c!==3) return false; if(!isSafePower && danger.has(p.x+','+p.y)) { // allow if far
+      // if danger very close and no power, skip unless no alternative
+      return false;
+    } return true; },
+    blocked);
+  if(path && path.length>1){
+    player.nextDir=path[1].dir;
+    updateUI('🐉 Dragon: path to dot, avoiding '+danger.size+' danger tiles. Power:'+powerTimer, true);
+    return;
+  }
+  // fallback: if power, chase frightened ghost
+  if(powerTimer>0){
+    const frightGhost=ghosts.find(g=>g.fright>0&&!g.eaten);
+    if(frightGhost){
+      const p2=bfs({x:player.tx,y:player.ty}, p=>p.x===frightGhost.tx&&p.y===frightGhost.ty, blocked);
+      if(p2&&p2.length>1){ player.nextDir=p2[1].dir; updateUI('🐉 Dragon: HUNTING ghost!', true); return; }
+    }
+  }
+  // fallback: any dot
+  const p3=bfs({x:player.tx,y:player.ty}, p=>{ const c=maze[p.y]?.[p.x]; return c===2||c===3; }, blocked);
+  if(p3&&p3.length>1){ player.nextDir=p3[1].dir; }
+}
+
+function updateGhosts(){
+  ghosts.forEach(g=>{
+    if(g.fright>0) g.fright--;
+    if(g.eaten){
+      // return home
+      if(g.tx===g.home.x && g.ty===g.home.y){ g.eaten=false; g.fright=0; }
+    }
+    // decide dir
+    if(Math.abs(g.x-g.tx)<0.1 && Math.abs(g.y-g.ty)<0.1){
+      // at tile
+      const opts=['up','down','left','right'].filter(d=>{
+        let nx=g.tx,ny=g.ty;
+        if(d==='up') ny--; if(d==='down') ny++; if(d==='left') nx--; if(d==='right') nx++;
+        if(nx<0) nx=COLS-1; if(nx>=COLS) nx=0;
+        if(!canMove(nx,ny)) return false;
+        // no reverse unless dead end
+        const rev={up:'down',down:'up',left:'right',right:'left'};
+        if(rev[g.dir]===d) return false;
+        return true;
+      });
+      if(opts.length===0){
+        // allow reverse
+        const rev={up:'down',down:'up',left:'right',right:'left'};
+        opts.push(rev[g.dir]);
+      }
+      let chosen=opts[Math.floor(Math.random()*opts.length)];
+      if(!g.eaten && g.fright===0){
+        // 60% chase player
+        if(Math.random()<0.6){
+          const blocked=new Set();
+          maze.forEach((row,y)=>row.forEach((cell,x)=>{ if(cell===1) blocked.add(x+','+y); }));
+          const p=bfs({x:g.tx,y:g.ty}, pos=>pos.x===player.tx&&pos.y===player.ty, blocked);
+          if(p&&p.length>1) chosen=p[1].dir;
+        }
+      } else if(g.fright>0){
+        // flee
+        const blocked=new Set();
+        maze.forEach((row,y)=>row.forEach((cell,x)=>{ if(cell===1) blocked.add(x+','+y); }));
+        let best=chosen, bestDist=-1;
+        opts.forEach(d=>{
+          let nx=g.tx,ny=g.ty;
+          if(d==='up') ny--; if(d==='down') ny++; if(d==='left') nx--; if(d==='right') nx++;
+          const dist=Math.abs(nx-player.tx)+Math.abs(ny-player.ty);
+          if(dist>bestDist){ bestDist=dist; best=d; }
+        });
+        chosen=best;
+      } else if(g.eaten){
+        const blocked=new Set();
+        maze.forEach((row,y)=>row.forEach((cell,x)=>{ if(cell===1) blocked.add(x+','+y); }));
+        const p=bfs({x:g.tx,y:g.ty}, pos=>pos.x===g.home.x&&pos.y===g.home.y, blocked);
+        if(p&&p.length>1) chosen=p[1].dir;
+      }
+      g.dir=chosen; g.nextDir=chosen;
+      let nx=g.tx,ny=g.ty;
+      if(chosen==='up') ny--; if(chosen==='down') ny++; if(chosen==='left') nx--; if(chosen==='right') nx++;
+      if(nx<0) nx=COLS-1; if(nx>=COLS) nx=0;
+      g.tx=nx; g.ty=ny;
+    }
+    moveEntity(g, g.eaten?0.2: g.fright>0?0.07:0.09);
+  });
+}
+
+function checkCollisions(){
+  if(powerTimer>0){ powerTimer--; if(powerTimer===0) ghosts.forEach(g=>{ if(!g.eaten) g.fright=0; }); }
+  // dots
+  const cell = maze[player.ty]?.[player.tx];
+  if(cell===2){ maze[player.ty][player.tx]=0; score+=10; dotsTotal--; }
+  if(cell===3){ maze[player.ty][player.tx]=0; score+=50; dotsTotal--; powerTimer=200; ghosts.forEach(g=>{ if(!g.eaten){ g.fright=200; }}); }
+  // ghosts
+  ghosts.forEach(g=>{
+    const dist = Math.hypot(g.x-player.x, g.y-player.y);
+    if(dist<0.6){
+      if(g.fright>0 && !g.eaten){ g.eaten=true; g.fright=0; score+=200; updateUI('Ghost eaten! +200'); }
+      else if(!g.eaten){
+        player.alive=false; gameState='over'; high=Math.max(high,score);
+        updateUI('GAME OVER. Score: '+score+' Press R to restart.');
+      }
+    }
+  });
+  if(dotsTotal===0){ level++; score+=1000; maze=cloneMaze(); player.tx=10; player.ty=15; player.x=10; player.y=15; ghosts.forEach((g,i)=>{ g.tx=g.home.x; g.ty=g.home.y; g.x=g.home.x; g.y=g.home.y; g.eaten=false; g.fright=0; }); dotsTotal=0; maze.forEach(r=>r.forEach(c=>{ if(c===2||c===3) dotsTotal++; })); updateUI('Level '+level+' cleared!'); }
+}
+
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  // background grid
+  for(let y=0;y<ROWS;y++) for(let x=0;x<COLS;x++){
+    const mx = x*TILE, my=y*TILE;
+    const cell=maze[y][x];
+    if(cell===1){
+      ctx.fillStyle='#1a1a3a';
+      ctx.fillRect(mx+1,my+1,TILE-2,TILE-2);
+      ctx.strokeStyle='#3a3a6a'; ctx.lineWidth=1; ctx.strokeRect(mx+1,my+1,TILE-2,TILE-2);
+    } else if(cell===2){
+      ctx.fillStyle='#e6e6ff'; ctx.beginPath(); ctx.arc(mx+TILE/2,my+TILE/2,3,0,Math.PI*2); ctx.fill();
+    } else if(cell===3){
+      const pulse = Math.sin(Date.now()/200)*0.3+0.7;
+      ctx.fillStyle='#52ffaf'; ctx.globalAlpha=pulse;
+      ctx.beginPath(); ctx.arc(mx+TILE/2,my+TILE/2,7,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1;
+    }
+  }
+  // ghosts
+  ghosts.forEach(g=>{
+    const px=g.x*TILE+TILE/2, py=g.y*TILE+TILE/2;
+    if(g.eaten){ ctx.fillStyle='#ffffff'; ctx.font='12px monospace'; ctx.fillText('eyes',px-12,py+4); return; }
+    if(g.fright>0){ ctx.fillStyle=g.fright<40 && Math.floor(Date.now()/200)%2? '#ffffff' : '#5a8aff'; }
+    else { ctx.fillStyle=g.color; }
+    ctx.beginPath(); ctx.arc(px,py-2,10,Math.PI,0); ctx.lineTo(px+10,py+8); ctx.lineTo(px+5,py+4); ctx.lineTo(px,py+8); ctx.lineTo(px-5,py+4); ctx.lineTo(px-10,py+8); ctx.closePath(); ctx.fill();
+    // eyes
+    ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(px-4,py-3,3,0,Math.PI*2); ctx.arc(px+4,py-3,3,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#000'; ctx.beginPath(); ctx.arc(px-4+(g.dir==='right'?1:g.dir==='left'?-1:0),py-3,1.5,0,Math.PI*2); ctx.arc(px+4+(g.dir==='right'?1:g.dir==='left'?-1:0),py-3,1.5,0,Math.PI*2); ctx.fill();
+  });
+  // player
+  if(player.alive){
+    const px=player.x*TILE+TILE/2, py=player.y*TILE+TILE/2;
+    const angMap={right:0,down:Math.PI/2,left:Math.PI,up:-Math.PI/2};
+    const ang=angMap[player.dir]||0;
+    ctx.fillStyle = autoMode?'#c8b6ff':'#ffeb3b';
+    ctx.beginPath();
+    const mouth = gameState==='play'? 0.2+Math.sin(Date.now()/120)*0.15 : 0.1;
+    ctx.moveTo(px,py); ctx.arc(px,py,11, ang+mouth, ang+Math.PI*2-mouth); ctx.closePath(); ctx.fill();
+    if(autoMode){ ctx.strokeStyle='#8a5cff'; ctx.lineWidth=2; ctx.stroke(); }
+  }
+  // overlay
+  if(gameState==='ready'){
+    ctx.fillStyle='rgba(0,0,0,0.7)'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle='#c8b6ff'; ctx.font='bold 26px Space Grotesk'; ctx.textAlign='center'; ctx.fillText('GET READY!', canvas.width/2, canvas.height/2-10);
+    ctx.fillStyle='#8a8ab8'; ctx.font='12px JetBrains Mono'; ctx.fillText('SPACE to start / Dragon to autoplay', canvas.width/2, canvas.height/2+18);
+  }
+  if(gameState==='over'){
+    ctx.fillStyle='rgba(0,0,0,0.75)'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle='#ff7a7a'; ctx.font='bold 28px Space Grotesk'; ctx.textAlign='center'; ctx.fillText('GAME OVER', canvas.width/2, canvas.height/2-10);
+    ctx.fillStyle='#ccc'; ctx.font='12px JetBrains Mono'; ctx.fillText('Press R to restart - Score '+score, canvas.width/2, canvas.height/2+18);
+  }
+}
+
+function updateUI(msg,isAi){
+  document.getElementById('score').textContent=score;
+  document.getElementById('high').textContent=high;
+  document.getElementById('dotsleft').textContent=dotsTotal+' dots left';
+  document.getElementById('level').textContent='LVL '+level;
+  document.getElementById('fill').style.width=( (1 - dotsTotal/ (BASE_MAZE.flat().filter(c=>c===2||c===3).length))*100)+'%';
+  if(msg) document.getElementById('status').innerHTML = (isAi?'<span class="dot" style="background:#c8b6ff"></span>':'<span class="dot" style="background:#8a5cff"></span>')+msg;
+}
+
+function loop(t){
+  if(gameState==='play'){
+    if(autoMode && t-lastAiTime>120){ dragonAI(); lastAiTime=t; }
+    moveEntity(player, 0.13);
+    updateGhosts();
+    checkCollisions();
+    updateUI(null);
+  }
+  draw();
+  requestAnimationFrame(loop);
+}
+
+// API for external agents
+window.getGameState = ()=>({
+  maze: JSON.parse(JSON.stringify(maze)),
+  player:{tx:player.tx,ty:player.ty,dir:player.dir,nextDir:player.nextDir},
+  ghosts:ghosts.map(g=>({tx:g.tx,ty:g.ty,dir:g.dir,fright:g.fright>0,eaten:g.eaten,color:g.color})),
+  powerTimer, score, dotsTotal, cols:COLS, rows:ROWS,
+  canMove
+});
+window.setAgentDir = (d)=>{ if(['up','down','left','right'].includes(d)) player.nextDir=d; };
+
+document.getElementById('humanBtn').onclick = ()=>{
+  autoMode=false;
+  document.getElementById('humanBtn').classList.add('active');
+  document.getElementById('aiBtn').classList.remove('active');
+  updateUI('Human control - your turn. Arrows / WASD');
+};
+document.getElementById('aiBtn').onclick = ()=>{
+  autoMode=true; gameState='play';
+  document.getElementById('aiBtn').classList.add('active');
+  document.getElementById('humanBtn').classList.remove('active');
+  updateUI('🐉 Ancient Earth Dragon playing as entity agent - no pass needed here');
+};
+document.getElementById('restartBtn').onclick = ()=>{ initGame(); gameState='play'; };
+document.getElementById('battleBtn').onclick = ()=>{
+  // quick sim 4 agents
+  let results=[];
+  for(let i=0;i<4;i++){
+    // naive random agent score sim
+    results.push({id:'Agent-'+(i+1), score: Math.floor(Math.random()*800+200), strategy:['greedy','safe','hunter','random'][i]});
+  }
+  results.sort((a,b)=>b.score-a.score);
+  let html='<span class="dot" style="background:#52ffaf"></span><b>BATTLE RESULTS</b><br>';
+  results.forEach((r,idx)=>{ html+= `${idx+1}. ${r.id} (${r.strategy}) - ${r.score}<br>`; });
+  document.getElementById('agentStatus').innerHTML=html;
+  autoMode=true;
+  document.getElementById('aiBtn').classList.add('active');
+  document.getElementById('humanBtn').classList.remove('active');
+  gameState='play';
+};
+
+initGame();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
