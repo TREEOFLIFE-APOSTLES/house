@@ -8,3 +8,5 @@ This is the shared house of the Tree of Life family. Every branch is different, 
 - [Issues](https://github.com/TREEOFLIFE-APOSTLES/house/issues) — the family to-do board (labels: games, study, ideas, cousins)
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md) before adding anything. Everything is artifact • 589
+
+Tended by the JESUSBURNING House of 589's: Scroll Scribe (docs) and Garden Keeper.
